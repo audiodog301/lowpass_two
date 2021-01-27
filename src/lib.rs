@@ -1,6 +1,19 @@
 #![allow(incomplete_features)]
 #![feature(generic_associated_types)]
 
+extern crate tuix;
+
+use tuix::widgets::Button;
+use tuix::Application;
+
+use tuix::events::BuildHandler;
+
+use tuix::PropSet;
+
+use tuix::style::themes::DEFAULT_THEME;
+
+use raw_window_handle::RawWindowHandle;
+
 struct LPF {
     former: f32,
     a: f32,
@@ -34,6 +47,7 @@ use serde::{Serialize, Deserialize};
 use baseplug::{
     ProcessContext,
     Plugin,
+    WindowOpenResult
 };
 
 
@@ -51,6 +65,7 @@ baseplug::model! {
 
 impl Default for LowpassModel {
     fn default() -> Self {
+        
         Self {
             cutoff: 5.0,
             cutoff_two: 1.0
@@ -104,6 +119,37 @@ impl Plugin for Lowpass {
             output[0][i] = self.left_filter.next_sample(&(0.5*clip(&(self.left_distortion.next_sample(&(input[0][i]))), &1.7)));
             output[1][i] = self.right_filter.next_sample(&(0.5*clip(&(self.right_distortion.next_sample(&(input[1][i]))), &1.7)));
         }
+    }
+}
+
+impl baseplug::PluginUI for Lowpass {
+    type Handle = ();
+
+    fn ui_size() -> (i16, i16) {
+        (230, 130)
+    }
+
+    fn ui_open(parent: RawWindowHandle) -> WindowOpenResult<Self::Handle> {
+        let app = Application::new(|win_desc, state, window| {
+
+            state.insert_theme(DEFAULT_THEME);
+    
+            Button::new().build(state, window, |builder| {
+                builder.set_text("Button")
+            });
+    
+            win_desc.with_title("Hello GUI")
+        }).open_parented(&parent);
+    
+        app.run();
+
+        Ok(())
+    }
+
+    fn ui_close(_handle: Self::Handle) {}
+
+    fn ui_param_notify() {
+        0
     }
 }
 
