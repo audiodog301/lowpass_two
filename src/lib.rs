@@ -44,8 +44,8 @@ impl Default for LowpassModel {
 }
 
 struct Lowpass {
-    leftDistortion: LPF,
-    rightDistortion: LPF,
+    left_distortion: LPF,
+    right_distortion: LPF,
 }
 
 impl Plugin for Lowpass {
@@ -61,8 +61,8 @@ impl Plugin for Lowpass {
     #[inline]
     fn new(_sample_rate: f32, _model: &LowpassModel) -> Self {
         Self {
-            leftDistortion: LPF { former: 0.0, a: 4.0},
-            rightDistortion: LPF { former: 0.0, a: 4.0},
+            left_distortion: LPF { former: 0.0, a: 4.0},
+            right_distortion: LPF { former: 0.0, a: 4.0},
         }
     }
 
@@ -73,12 +73,12 @@ impl Plugin for Lowpass {
 
         for i in 0..ctx.nframes {
             if model.cutoff.is_smoothing() {
-                self.leftDistortion.set_a(&(model.cutoff[i]));
-                self.rightDistortion.set_a(&(model.cutoff[i]));
+                self.left_distortion.set_a(&(model.cutoff[i]));
+                self.right_distortion.set_a(&(model.cutoff[i]));
             }
             
-            output[0][i] = self.leftDistortion.next_sample(&(input[0][i]));
-            output[1][i] = self.leftDistortion.next_sample(&(input[1][i]));
+            output[0][i] = self.left_distortion.next_sample(&(input[0][i]));
+            output[1][i] = self.right_distortion.next_sample(&(input[1][i]));
         }
     }
 }
