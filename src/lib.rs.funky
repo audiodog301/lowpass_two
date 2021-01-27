@@ -1,0 +1,64 @@
+#![allow(incomplete_features)]
+#![feature(generic_associated_types)]
+
+use serde::{Serialize, Deserialize};
+
+use baseplug::{
+    ProcessContext,
+    Plugin,
+};
+
+
+baseplug::model! {
+    #[derive(Debug, Serialize, Deserialize)]
+    struct LowpassModel {
+        #[model(min = -90.0, max = 3.0)]
+        #[parameter(name = "cutoff")]
+        cutoff: f32
+    }
+}
+
+impl Default for LowpassModel {
+    fn default() -> Self {
+        Self {
+            cutoff: 1.0
+        }
+    }
+}
+
+struct Lowpass;
+
+impl Plugin for Lowpass {
+    const NAME: &'static str = "basic gain plug";
+    const PRODUCT: &'static str = "basic gain plug";
+    const VENDOR: &'static str = "spicy plugins & co";
+
+    const INPUT_CHANNELS: usize = 2;
+    const OUTPUT_CHANNELS: usize = 2;
+
+    type Model = LowpassModel;
+
+    #[inline]
+    fn new(_sample_rate: f32, _model: &LowpassModel) -> Self {
+        Self
+    }
+
+    #[inline]
+    fn process(&mut self, model: &LowpassModelProcess, ctx: &mut ProcessContext<Self>) {
+        let input = &ctx.inputs[0].buffers;
+        let output = &mut ctx.outputs[0].buffers;
+
+        let mut former_left: f32 = output[0][0];
+        let mut former_right: f32 = output[1][0];
+
+        for i in 0..ctx.nframes {
+            output[0][i] = input[0][i] + former_left;
+            output[1][i] = input[1][i] + former_right;
+
+            former_left = output[0][i];
+            former_right = output[1][i];
+        }
+    }
+}
+
+baseplug::vst2!(Lowpass, b"lowp");
