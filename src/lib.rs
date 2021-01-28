@@ -13,6 +13,7 @@ use tuix::PropSet;
 use tuix::style::themes::DEFAULT_THEME;
 
 use raw_window_handle::RawWindowHandle;
+use raw_window_handle::HasRawWindowHandle;
 
 struct LPF {
     former: f32,
@@ -47,7 +48,9 @@ use serde::{Serialize, Deserialize};
 use baseplug::{
     ProcessContext,
     Plugin,
-    WindowOpenResult
+    WindowOpenResult,
+    Model,
+    Param
 };
 
 
@@ -130,6 +133,21 @@ impl baseplug::PluginUI for Lowpass {
     }
 
     fn ui_open(parent: RawWindowHandle) -> WindowOpenResult<Self::Handle> {
+        
+        struct ImplementsHasRawWindowHandle {
+            handle: RawWindowHandle
+        };
+
+        unsafe impl HasRawWindowHandle for ImplementsHasRawWindowHandle {
+            fn raw_window_handle(&self) -> RawWindowHandle {
+                self.handle
+            }
+        }
+
+        let implements_has_raw_window_handle: ImplementsHasRawWindowHandle = ImplementsHasRawWindowHandle {
+            handle: parent,
+        };
+        
         let app = Application::new(|win_desc, state, window| {
 
             state.insert_theme(DEFAULT_THEME);
@@ -139,17 +157,15 @@ impl baseplug::PluginUI for Lowpass {
             });
     
             win_desc.with_title("Hello GUI")
-        }).open_parented(&parent);
-    
-        app.run();
+        }).open_parented(&implements_has_raw_window_handle);
 
         Ok(())
     }
 
     fn ui_close(_handle: Self::Handle) {}
 
-    fn ui_param_notify() {
-        0
+    fn ui_param_notify(handle: &Self::Handle, param: &'static Param<Self, <Self::Model as Model<Self>>::Smooth>, val: f32) {
+
     }
 }
 
